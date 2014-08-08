@@ -112,21 +112,28 @@ import org.opencv.imgproc.Imgproc;
 
 import com.google.gson.Gson;
 
+import javapns.Push;
+import javapns.communication.exceptions.CommunicationException;
+import javapns.communication.exceptions.KeystoreException;
+import javapns.devices.*;
+
 @Path("/ParkITREST")
 public class ParkITREST {
 
 	   private final String UPLOADED_FILE_PATH = "/Users/apetrill/Documents/uploads/";
 	   
-	   private static String IPAddress = "10.155.69.194";
+	   private static String IPAddress = "http://asf-parkit.cisco.com/";
+	   //asf-parkit.cisco.com
+	   private static boolean[] parkingSpaces = new boolean[8];
 	   
-	   private static boolean[] parkingSpaces = new boolean[11];
+	   //private static Queue<> = new  Queue<String>();
 	   
 
 	   @GET
 	   @Path("/test")
 	   @Produces("text/html")
 	   public String test(){
-		   return ("<html><body><h1>JAX-RS Upload Form</h1><form action=\"http://"+IPAddress+":8080/ParkIT-test/rest/ParkITREST/uploadFile\" method=\"post\" enctype=\"multipart/form-data\"><p>Select a file : <input type=\"file\" name=\"uploadedFile.jpeg\" /></p><input type=\"submit\" value=\"Upload It\" name = \"upload\" id = \"upload\"/></form></body></html>");
+		   return ("<html><body><h1>JAX-RS Upload Form</h1><form action=\"http://"+IPAddress+":8080/ParkIT-test/rest/ParkITREST/uploadImage\" method=\"post\" enctype=\"multipart/form-data\"><p>Select a file : <input type=\"file\" name=\"uploadedFile.jpeg\" /></p><input type=\"submit\" value=\"2\" name = \"upload\" id = \"upload\"/></form></body></html>");
 	   }
 
 	   
@@ -139,10 +146,13 @@ public class ParkITREST {
 	   @POST
 	   @Path("/uploadImage")
 	   @Consumes(MediaType.MULTIPART_FORM_DATA)
-	   public Response uploadImage( @Context HttpServletRequest request){
+	   public Response uploadImage( @Context HttpServletRequest request) throws CommunicationException, KeystoreException{
 		    int spaceNumber =0; 
 		    String name= "";
 		    String imageName = "dummy.jpg";
+		    //String filePath = "/Users/apetrill/Documents/uploads/";
+		    String filePath = System.getProperty("java.io.tmpdir");
+		    System.out.println("temporary file path:"+filePath);
 		   if(ServletFileUpload.isMultipartContent(request)){
 			   
 		   ServletFileUpload upload = new ServletFileUpload();
@@ -163,7 +173,7 @@ public class ParkITREST {
 			    	imageName = name;
 			        System.out.println("File field " + name + " with file name "
 			            + item.getName() + " detected.");
-			           OutputStream out = new FileOutputStream(new File("/Users/apetrill/Documents/uploads/"+imageName));
+			           OutputStream out = new FileOutputStream(new File(filePath+imageName));
 
 		            int read = 0;
 		            byte[] bytes = new byte[1024];
@@ -177,9 +187,15 @@ public class ParkITREST {
 		            }
 			    }
 			System.out.println(name);
-            BufferedImage img_original =ImageIO.read(new File("/Users/apetrill/Documents/uploads/"+imageName));
+            BufferedImage img_original =ImageIO.read(new File(filePath+imageName));
             System.out.println("got here");
-            parkingSpaces[spaceNumber] = DisplayImage.processImage(img_original); 
+            parkingSpaces[spaceNumber] = DisplayImage.processImage(img_original);
+            //if (parkingSpaces[spaceNumber]){
+            	//System.out.println("car present");
+            	//Push.alert("Hello World!", "/Users/apetrill/Documents/ParkITAPNS/ParkIT/ParkIT/push_certificates/ParkIT_aps_development.p12", "cisco123", false, "6e293126b4dbf2cd8841717c3ebf701e02167240fc26d3fcccf8c231e606584c");
+            	//Push.test("/Users/apetrill/Documents/ParkITAPNS/ParkIT/ParkIT/push_certificates/ParkIT_aps_development.p12", "cisco123", false, "6e293126b4dbf2cd8841717c3ebf701e02167240fc26d3fcccf8c231e606584c");
+            //}
+            //alert("hello","/Users/apetrill/Documents/ParkITAPNS/ParkIT/ParkIT/push certificates/ParkIT_aps_development.p12",)
 		} catch (FileUploadException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -217,8 +233,7 @@ public class ParkITREST {
 
 		   Gson gson = new Gson();
 
-		   //parkingSpaces[0]= false;
-		   //parkingSpaces[4] = true;
+
 		   
 		   String json = gson.toJson(parkingSpaces);
 
